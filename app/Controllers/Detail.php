@@ -12,7 +12,7 @@ use CodeIgniter\View\Table;
 use Psr\Log\LoggerInterface;
 use Override;
 
-class Home extends BaseController
+class Detail extends BaseController
 {
     protected $niceModel;
     protected $stage;
@@ -29,17 +29,6 @@ class Home extends BaseController
         $this->resultModel = new Result();
     }
     
-    public function index()
-    {
-        $data_nice = $this->niceModel->select('race_year.*, SUM(fin_stage.distance) as total_distance')->like('race_year.real_name', 'Paris - Nice')->join('stage', 'race_year.id = stage.id_race_year', 'left')->groupBy('race_year.id')->orderBy('race_year.year', 'ASC')->findAll();
-
-        $data = [
-            'data_nice' => $data_nice
-        ];
-
-        return view('index', $data);
-    }
-
     public function detail($raceYearId)
     {
         $raceYear = $this->niceModel->find($raceYearId);
@@ -97,52 +86,5 @@ class Home extends BaseController
         ];
 
         return view('stage_result', $data);
-    }
-
-    public function createRaceYear()
-    {
-        $races = $this->niceModel
-            ->where('sex', 'M')
-            ->where('category', 'E')
-            ->like('real_name', 'Paris - Nice')
-            ->orderBy('real_name', 'ASC')
-            ->findAll();
-
-        $data = [
-            'races' => $races
-        ];
-
-        return view('race_year_create', $data);
-    }
-
-    public function storeRaceYear()
-    {
-        $rules = [
-            'real_name' => 'required|min_length[3]',
-            'id_race'   => 'required|integer',
-            'year'      => 'required|integer|exact_length[4]',
-            'logo'      => 'uploaded[logo]|is_image[logo]|max_size[logo,2048]'
-        ];
-
-        if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
-        }
-
-        $logoFile = $this->request->getFile('logo');
-        $logoName = null;
-
-        if ($logoFile && $logoFile->isValid() && !$logoFile->hasMoved()) {
-            $logoName = $logoFile->getRandomName();
-            $logoFile->move(FCPATH . 'assets/img/logos/', $logoName);
-        }
-
-        $this->niceModel->insert([
-            'real_name' => $this->request->getPost('real_name'),
-            'id_race'   => $this->request->getPost('id_race'),
-            'year'      => $this->request->getPost('year'),
-            'logo'      => $logoName
-        ]);
-
-        return redirect()->to(base_url())->with('success', 'Nový ročník závodu byl úspěšně přidán.');
     }
 }
